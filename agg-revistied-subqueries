@@ -1,0 +1,52 @@
+-- 1. Select the first name, last name, and email address of all the customers who have rented a movie.	
+SELECT DISTINCT(r.customer_id) AS id, c.first_name, c.last_name, c.email 
+	FROM sakila.rental AS r
+		LEFT JOIN sakila.customer AS c
+			ON r.customer_id = c.customer_id;
+
+-- 2. What is the average payment made by each customer (display the customer id, customer name (concatenated), and the average payment made).
+SELECT pay.customer_id, concat(cust.first_name, ' ', cust.last_name) AS name, AVG(pay.amount) AS avg_payment
+	FROM sakila.payment AS pay
+		LEFT JOIN sakila.customer AS cust
+			ON pay.customer_id = cust.customer_id
+				GROUP BY 1;
+
+-- 3. Select the name and email address of all the customers who have rented the "Action" movies.
+-- a) Write the query using multiple join statements
+SELECT DISTINCT(concat(cust.first_name, ' ', cust.last_name)) AS name, cust.email
+	FROM sakila.customer AS cust
+		LEFT JOIN sakila.rental AS r
+			ON cust.customer_id = r.customer_id
+				LEFT JOIN sakila.inventory AS i
+					ON i.inventory_id = r.inventory_id
+						LEFT JOIN sakila.film_category AS fc
+							ON fc.film_id = i.film_id
+								LEFT JOIN sakila.category AS c
+									ON c.category_id = fc.category_id
+										WHERE c.name = 'action';
+
+-- b) Write the query using sub queries with multiple WHERE clause and IN condition
+SELECT CONCAT(cust.first_name, ' ', cust.last_name) AS name, cust.email
+	FROM sakila.customer AS cust
+		WHERE cust.customer_id IN (
+			SELECT r.customer_id
+				FROM sakila.rental AS r
+					JOIN sakila.inventory AS i 
+						ON i.inventory_id = r.inventory_id
+							JOIN sakila.film_category AS fc 
+								ON fc.film_id = i.film_id
+									JOIN sakila.category AS c 
+										ON c.category_id = fc.category_id
+											WHERE c.name = 'action');
+
+
+-- 4. Use the case statement to create a new column classifying existing columns as either or high value transactions based on the amount 
+-- of payment. If the amount is between 0 and 2, label should be low and if the amount is between 2 and 4, the label should be medium, 
+-- and if it is more than 4, then it should be high.
+SELECT *, 
+	CASE
+		WHEN amount < 2 THEN 'low'
+			WHEN amount < 4 THEN 'medium'
+				ELSE 'high'
+					END AS level
+						FROM sakila.payment;
